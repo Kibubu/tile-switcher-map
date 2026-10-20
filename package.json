@@ -1,0 +1,10 @@
+{
+  "name": "tile-switcher-map",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Map that switches between tile providers with one button each",
+  "license": "MIT",
+  "scripts": {
+    "serve": "python3 -m http.server 8000"
+  }
+}

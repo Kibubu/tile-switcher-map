@@ -1,0 +1,48 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --border: rgba(0, 0, 0, 0.12);
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  --accent: #0b6bcb;
+  --radius: 10px;
+}
+
+html, body { margin: 0; height: 100%; }
+body { background: #aad3df; color: var(--fg); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+#map { position: absolute; inset: 0; }
+body.dark-tiles { background: #1d2125; }
+
+/* ---------- Provider buttons ---------- */
+.providers {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 4px; background: var(--bg); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.provider-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; border: 1px solid transparent; border-radius: 7px;
+  background: none; color: var(--fg); font: inherit; text-align: left; cursor: pointer;
+}
+.provider-btn:hover { background: var(--border); }
+.provider-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.provider-btn.active { background: var(--accent); color: #fff; }
+.provider-btn .icon { font-size: 18px; width: 22px; text-align: center; }
+
+/* Phones: a row of icon buttons along the bottom, scrolling sideways if needed. */
+@media (max-width: 600px) {
+  .leaflet-top.leaflet-right { top: auto; bottom: 44px; left: 0; right: 0; display: flex; justify-content: center; }
+  .providers { flex-direction: row; overflow-x: auto; max-width: calc(100vw - 32px); margin: 0 16px 10px !important; }
+  .provider-btn { flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 11px; white-space: nowrap; }
+}
+
+/* ---------- Faster zooming ---------- */
+.fastzoom-btn {
+  display: block; width: 30px; height: 30px; padding: 0; border: 0;
+  background: #fff; font-size: 16px; cursor: pointer; filter: grayscale(1); opacity: 0.7;
+}
+.fastzoom-btn:hover { background: #f4f4f4; }
+.fastzoom-btn.active { background: var(--accent); filter: none; opacity: 1; }
+
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #1d2125; --fg: #e6e8eb; --border: rgba(255, 255, 255, 0.14); --accent: #5aa9f5; }
+  .provider-btn.active { color: #0b1520; }
+}

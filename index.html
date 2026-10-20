@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Tile Switcher Map</title>
+  <meta name="description" content="One map, many tile providers: switch the basemap with a button.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+  <div id="map" role="application" aria-label="Map"></div>
+
+  <!-- Leaflet 1.9.4, self-hosted (one origin fewer to reach on a weak signal). -->
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script src="providers.js?v=1"></script>
+  <script src="app.js?v=1"></script>
+</body>
+</html>
