@@ -16,6 +16,7 @@ body.dark-tiles { background: #1d2125; }
 .providers {
   display: flex; flex-direction: column; gap: 4px;
   padding: 4px; background: var(--bg); border-radius: var(--radius); box-shadow: var(--shadow);
+  max-height: calc(100vh - 80px); overflow-y: auto;
 }
 .provider-btn {
   display: flex; align-items: center; gap: 8px;
@@ -26,13 +27,94 @@ body.dark-tiles { background: #1d2125; }
 .provider-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .provider-btn.active { background: var(--accent); color: #fff; }
 .provider-btn .icon { font-size: 18px; width: 22px; text-align: center; }
+.provider-btn.overlay.active { background: none; color: var(--fg); box-shadow: inset 0 0 0 2px var(--accent); }
+.more-btn { border-top: 1px solid var(--border); border-radius: 0 0 7px 7px; }
 
 /* Phones: a row of icon buttons along the bottom, scrolling sideways if needed. */
 @media (max-width: 600px) {
   .leaflet-top.leaflet-right { top: auto; bottom: 44px; left: 0; right: 0; display: flex; justify-content: center; }
   .providers { flex-direction: row; overflow-x: auto; max-width: calc(100vw - 32px); margin: 0 16px 10px !important; }
   .provider-btn { flex-direction: column; gap: 2px; padding: 6px 8px; font-size: 11px; white-space: nowrap; }
+  /* First in the row, so it's visible without scrolling. */
+  .more-btn { order: -1; border-top: 0; border-right: 1px solid var(--border); border-radius: 7px 0 0 7px; }
 }
+
+/* ---------- Picker with every provider ---------- */
+.catalog {
+  position: fixed; z-index: 1000; top: 10px; right: 10px; bottom: 10px; width: min(360px, calc(100vw - 32px));
+  display: flex; flex-direction: column;
+  background: var(--bg); color: var(--fg); border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.catalog[hidden] { display: none; }
+.catalog-head { display: flex; gap: 6px; padding: 8px; border-bottom: 1px solid var(--border); }
+.catalog-head input {
+  flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px;
+  background: var(--bg); color: var(--fg); font: inherit;
+}
+.close-btn, .pin, .catalog-foot button, .toast button, .keys button {
+  border: 1px solid transparent; border-radius: 7px; background: none; color: var(--fg); font: inherit; cursor: pointer;
+}
+.close-btn { width: 34px; }
+.close-btn:hover, .pin:hover, .catalog-foot button:hover { background: var(--border); }
+.catalog-list { flex: 1; overflow-y: auto; padding: 0 8px 8px; overscroll-behavior: contain; }
+.catalog-list h2 { margin: 14px 4px 2px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; opacity: 0.7; }
+.catalog-list h3 { margin: 10px 4px 2px; font-size: 13px; }
+.catalog-list ul { list-style: none; margin: 0; padding: 0; }
+.catalog-list li { display: flex; align-items: center; }
+.key-tag { font-weight: normal; font-size: 12px; opacity: 0.7; }
+.pick {
+  flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0;
+  padding: 5px 8px; border: 0; border-radius: 7px; background: none; color: var(--fg); font: inherit; text-align: left; cursor: pointer;
+}
+.pick .icon { width: 20px; text-align: center; }
+.pick:hover { background: var(--border); }
+.pick.active { background: var(--accent); color: #fff; }
+.pick.locked .label { opacity: 0.6; }
+.pick:focus-visible, .pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pin { width: 32px; height: 30px; font-size: 16px; color: var(--accent); }
+.empty { padding: 16px 4px; opacity: 0.7; }
+.catalog-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; border-top: 1px solid var(--border); font-size: 12px; }
+.catalog-foot button { padding: 6px 10px; font-size: 14px; }
+.catalog-foot span { opacity: 0.7; }
+
+@media (max-width: 600px) {
+  .catalog { top: auto; left: 0; right: 0; bottom: 0; width: auto; height: 70vh; border-radius: var(--radius) var(--radius) 0 0; }
+}
+
+/* ---------- Key dialog ---------- */
+.keys {
+  width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0;
+  border: 0; border-radius: var(--radius); box-shadow: var(--shadow); background: var(--bg); color: var(--fg);
+}
+.keys::backdrop { background: rgba(0, 0, 0, 0.35); }
+.keys[open] { display: flex; }
+.keys form { display: flex; flex-direction: column; min-height: 0; padding: 16px 18px; }
+.key-rows { flex: 1; min-height: 0; overflow-y: auto; margin: 0 -8px; padding: 0 8px; }
+.keys h2 { margin: 0 0 6px; font-size: 18px; }
+.keys .hint { margin: 0 0 12px; font-size: 13px; opacity: 0.8; }
+.key-row { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 2px 10px; padding: 8px; border-radius: 7px; }
+.key-row.wanted { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.key-row label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; }
+.key-row small { font-weight: normal; opacity: 0.7; }
+.key-row input {
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg); color: var(--fg); font: 13px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.key-row a { padding-bottom: 7px; color: var(--accent); font-size: 13px; white-space: nowrap; }
+.key-row .note { grid-column: 1 / -1; margin: 0; font-size: 12px; opacity: 0.7; }
+.key-row .note:empty { display: none; }
+.keys .show { display: block; margin: 10px 8px; font-size: 13px; }
+.keys .actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.keys .actions button { padding: 7px 14px; border-color: var(--border); }
+.keys .actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ---------- Messages ---------- */
+.toast {
+  position: fixed; z-index: 1001; left: 50%; bottom: 40px; transform: translateX(-50%); max-width: calc(100vw - 32px);
+  padding: 8px 12px; border-radius: var(--radius); background: var(--fg); color: var(--bg); box-shadow: var(--shadow);
+}
+.toast[hidden] { display: none; }
+.toast button { color: inherit; text-decoration: underline; }
 
 /* ---------- Faster zooming ---------- */
 .fastzoom-btn {
@@ -44,5 +126,5 @@ body.dark-tiles { background: #1d2125; }
 
 @media (prefers-color-scheme: dark) {
   :root { --bg: #1d2125; --fg: #e6e8eb; --border: rgba(255, 255, 255, 0.14); --accent: #5aa9f5; }
-  .provider-btn.active { color: #0b1520; }
+  .provider-btn.active, .pick.active, .keys .actions .primary { color: #0b1520; }
 }

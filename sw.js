@@ -5,13 +5,13 @@
  *   network first but falls back to the cached copy after NAV_TIMEOUT_MS; versioned files
  *   (?v=…) and vendor/ are served from the cache.
  * - Map tiles: every tile you have seen is kept and served from the cache; tiles older than
- *   TILE_MAX_AGE_MS are refreshed in the background. Each provider has its own cache with its own
- *   limit (MAX_TILES, oldest dropped first), so browsing one style doesn't evict another.
+ *   TILE_MAX_AGE_MS are refreshed in the background. Each provider group has its own cache with
+ *   its own limit (MAX_TILES, oldest dropped first), so browsing one style doesn't evict another.
  *   Nothing is prefetched: the providers' usage policies forbid bulk downloading.
  *
  * Bump VERSION together with the ?v= query strings in index.html on every deploy.
  */
-const VERSION = '1';
+const VERSION = '2';
 const SHELL_CACHE = `tsm-shell-v${VERSION}`;
 const TILE_CACHE = 'tsm-tiles-';
 
@@ -24,20 +24,34 @@ const SHELL_FILES = [
   'vendor/leaflet/leaflet.js',
 ];
 
-// Tile host → cache name suffix (one per provider, see providers.js).
-const TILE_HOSTS = [
-  [/^tile\.openstreetmap\.org$/, 'osm'],
-  [/^[abc]\.tile\.openstreetmap\.fr$/, 'osmfr'],          // HOT
-  [/^[abc]\.tile-cyclosm\.openstreetmap\.fr$/, 'cyclosm'],
-  [/^[abc]\.tile\.opentopomap\.org$/, 'topo'],
-  [/^[abcd]\.basemaps\.cartocdn\.com$/, 'carto'],         // light and dark
-  [/^(server|services)\.arcgisonline\.com$/, 'esri'],
-  [/^clarity\.maptiles\.arcgis\.com$/, 'esri'],
-];
+// The tile hosts come from providers.js: one cache per provider group, so browsing one style
+// doesn't evict another. Hosts of services whose terms restrict storing tiles (TILE_KEYS without
+// `cache`) are left alone and only go through the browser's HTTP cache.
+importScripts(`providers.js?v=${VERSION}`);
+
+const TILE_HOSTS = [];
+for (const p of self.PROVIDERS) {
+  const store = !p.key || Boolean(self.TILE_KEYS[p.key].cache);
+  const name = p.group.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  for (const { url } of p.layers) {
+    const host = url.match(/^https:\/\/([^/?]+)/)[1];
+    const re = new RegExp(`^${host.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace('{s}', '[^.]+')}$`);
+    if (!TILE_HOSTS.some(([r]) => r.source === re.source)) TILE_HOSTS.push([re, name, store]);
+  }
+}
+
+// Key parameters are left out of the cache key, so a changed key still finds the tiles.
+const KEY_PARAMS = Object.values(self.TILE_KEYS).map((k) => k.param);
+function tileKey(url) {
+  const u = new URL(url);
+  if (!KEY_PARAMS.some((param) => u.searchParams.has(param))) return url;
+  for (const param of KEY_PARAMS) u.searchParams.delete(param);
+  return u.href;
+}
 
 const NAV_TIMEOUT_MS = 4000;
 const TILE_MAX_AGE_MS = 7 * 24 * 3600 * 1000;
-const MAX_TILES = 2000;          // per provider, ~20–60 MB; the browser may evict more under pressure
+const MAX_TILES = 2000;          // per provider group, ~20–60 MB; the browser may evict more under pressure
 const TRIM_EVERY = 50;           // check the tile count every n stored tiles
 
 const scope = new URL(self.registration.scope);
@@ -55,6 +69,8 @@ self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     for (const key of await caches.keys()) {
       if (key.startsWith('tsm-shell-') && key !== SHELL_CACHE) await caches.delete(key);
+      // Tile caches of groups that no longer exist (or no longer may be stored).
+      if (key.startsWith(TILE_CACHE) && !TILE_HOSTS.some(([, name, store]) => store && key === TILE_CACHE + name)) await caches.delete(key);
     }
     await self.clients.claim();
   })());
@@ -66,7 +82,10 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
 
   const host = TILE_HOSTS.find(([re]) => re.test(url.hostname));
-  if (host) { event.respondWith(tile(event, TILE_CACHE + host[1])); return; }
+  if (host) {
+    if (host[2]) event.respondWith(tile(event, TILE_CACHE + host[1]));
+    return;
+  }
   if (url.origin !== scope.origin || !url.href.startsWith(scope.href)) return;
 
   if (req.mode === 'navigate') { event.respondWith(page(event)); return; }
@@ -117,11 +136,12 @@ async function tile(event, cacheName) {
   const store = async (res) => {
     // Opaque (no-CORS) responses would count several MB each against the storage quota.
     if (!res.ok || res.type === 'opaque') return;
-    await cache.put(req.url, res);
+    await cache.put(key, res);
     stored[cacheName] = (stored[cacheName] || 0) + 1;
     if (stored[cacheName] % TRIM_EVERY === 0) await trimTiles(cache);
   };
-  const cached = await cache.match(req.url);
+  const key = tileKey(req.url);
+  const cached = await cache.match(key);
   if (cached) {
     const age = Date.now() - new Date(cached.headers.get('date') || 0).getTime();
     if (age > TILE_MAX_AGE_MS && self.navigator.onLine !== false) {
