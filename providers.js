@@ -453,20 +453,23 @@
   ]);
 
   // ---------- NASA GIBS ----------
-  // "default" is the latest available day. maxNativeZoom follows each layer's tile matrix set.
+  // Daily layers ask for yesterday (UTC): GIBS's "default" time is the day still being processed
+  // (often already tomorrow in UTC), which it answers with grey striped placeholder tiles.
+  // maxNativeZoom follows each layer's tile matrix set.
+  const GIBS_DAY = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
   add({
-    group: 'NASA GIBS', icon: '🔭', url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{variant}', minZoom: 1,
+    group: 'NASA GIBS', icon: '🔭', url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{variant}', minZoom: 1, time: GIBS_DAY,
     attribution: 'Imagery provided by services from the Global Imagery Browse Services (GIBS), operated by the NASA/GSFC/Earth Science Data and Information System (<a href="https://earthdata.nasa.gov">ESDIS</a>) with funding provided by NASA/HQ.',
   }, [
-    ['nasa-truecolor', 'MODIS Terra true colour (today)', 'MODIS_Terra_CorrectedReflectance_TrueColor/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 9 }],
-    ['nasa-bands367', 'MODIS Terra bands 3-6-7', 'MODIS_Terra_CorrectedReflectance_Bands367/default/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 9 }],
+    ['nasa-truecolor', 'MODIS Terra true colour (yesterday)', 'MODIS_Terra_CorrectedReflectance_TrueColor/default/{time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 9 }],
+    ['nasa-bands367', 'MODIS Terra bands 3-6-7', 'MODIS_Terra_CorrectedReflectance_Bands367/default/{time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 9 }],
     ['nasa-bluemarble', 'Blue Marble', 'BlueMarble_ShadedRelief_Bathymetry/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 8 }],
     ['nasa-blackmarble', 'Black Marble (night lights)', 'VIIRS_Black_Marble/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png', { dark: true, maxNativeZoom: 8 }],
     ['nasa-citylights', 'City Lights 2012', 'VIIRS_CityLights_2012/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 8 }],
-    ['nasa-lst', 'Land surface temperature', 'MODIS_Terra_Land_Surface_Temp_Day/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 7 }],
-    ['nasa-snow', 'Snow cover', 'MODIS_Terra_NDSI_Snow_Cover/default/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 8 }],
-    ['nasa-aerosol', 'Aerosol optical depth', 'MODIS_Terra_Aerosol/default/default/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 6 }],
-    ['nasa-chlorophyll', 'Chlorophyll a', 'MODIS_Terra_L2_Chlorophyll_A/default/default/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 7 }],
+    ['nasa-lst', 'Land surface temperature', 'MODIS_Terra_Land_Surface_Temp_Day/default/{time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 7 }],
+    ['nasa-snow', 'Snow cover', 'MODIS_Terra_NDSI_Snow_Cover/default/{time}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 8 }],
+    ['nasa-aerosol', 'Aerosol optical depth', 'MODIS_Terra_Aerosol/default/{time}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 6 }],
+    ['nasa-chlorophyll', 'Chlorophyll a', 'MODIS_Terra_L2_Chlorophyll_A/default/{time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 7 }],
   ]);
 
   // ---------- Overlays ----------
