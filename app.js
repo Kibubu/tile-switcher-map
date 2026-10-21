@@ -136,7 +136,8 @@
   // belongs to, appended to its tile URLs. Never put into the shareable link.
   let keys = load(KEYS_KEY, {});
   const byId = Object.fromEntries(PROVIDERS.map((p) => [p.id, p]));
-  const missingKey = (p) => Boolean(p.key && !TILE_KEYS[p.key].optional && !keys[p.key]);
+  const keyOptional = (k) => Boolean(k.optional && (!k.keylessHosts || k.keylessHosts.includes(location.hostname)));
+  const missingKey = (p) => Boolean(p.key && !keyOptional(TILE_KEYS[p.key]) && !keys[p.key]);
   function withKey(p, url) {
     const key = p.key && keys[p.key];
     if (!key) return url;
@@ -349,7 +350,7 @@
         if (keyed) {
           const tag = document.createElement('span');
           tag.className = 'key-tag';
-          tag.textContent = keys[items[0].key] ? '🔑 key set' : keyed.optional ? '🔑 key optional' : '🔑 needs key';
+          tag.textContent = keys[items[0].key] ? '🔑 key set' : keyOptional(keyed) ? '🔑 key optional' : '🔑 needs key';
           section.querySelector('h3').append(' ', tag);
         }
         const ul = section.querySelector('ul');
@@ -420,7 +421,7 @@
       <a target="_blank" rel="noopener noreferrer">Get a key ↗</a>
       <p class="note"></p>`;
     row.querySelector('.name').textContent = k.label;
-    row.querySelector('small').textContent = `${count} map${count === 1 ? '' : 's'}${k.optional ? ', optional' : ''}`;
+    row.querySelector('small').textContent = `${count} map${count === 1 ? '' : 's'}${keyOptional(k) ? ', optional' : ''}`;
     row.querySelector('a').href = k.signup;
     row.querySelector('.note').textContent = k.optional || '';
     rows.append(row);

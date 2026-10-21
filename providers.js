@@ -24,8 +24,10 @@
 
   /* Services that take a key. Keys are entered in the page, kept in this browser only
    * (localStorage) and sent only to that service, as the query parameter `param`.
-   *   optional  the service also works without a key (text says when)
-   *   cache     the service worker may keep its tiles; the others' terms restrict storing tiles,
+   *   optional      the service also works without a key (text says when)
+   *   keylessHosts  ...but only when the page is served from one of these hosts; elsewhere the
+   *                 service answers with error tiles, so the key is required there
+   *   cache         the service worker may keep its tiles; the others' terms restrict storing tiles,
    *             so they only go through the browser's normal HTTP cache
    */
   root.TILE_KEYS = {
@@ -36,6 +38,8 @@
     stadia: {
       label: 'Stadia Maps', param: 'api_key', cache: true, signup: 'https://client.stadiamaps.com/signup/',
       optional: 'Works without a key on localhost and on domains added to your Stadia account.',
+      // Unknown domains get "401 Invalid Authentication" images, which load like normal tiles.
+      keylessHosts: ['localhost', '127.0.0.1'],
     },
     thunderforest: { label: 'Thunderforest', param: 'apikey', cache: true, signup: 'https://manage.thunderforest.com/' },
     maptiler: { label: 'MapTiler', param: 'key', signup: 'https://cloud.maptiler.com/account/keys/' },
