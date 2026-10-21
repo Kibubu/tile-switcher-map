@@ -3,7 +3,8 @@
  * call; the service worker picks up its tile host by itself.
  *
  * The catalogue follows leaflet-providers (https://github.com/leaflet-extras/leaflet-providers),
- * with dead hosts dropped (HikeBike) and moved ones updated (NASA GIBS, OneMap, OpenAIP).
+ * with dead hosts dropped (HikeBike) and moved ones updated (NASA GIBS, OneMap, OpenAIP), plus
+ * Copernicus Sentinel-2 imagery (EOX cloudless mosaics, HLS via GIBS).
  *
  * Every provider asks for visible attribution and forbids bulk downloading, so tiles are only
  * cached once you have looked at them (see sw.js); nothing is prefetched.
@@ -456,10 +457,11 @@
   // Daily layers ask for yesterday (UTC): GIBS's "default" time is the day still being processed
   // (often already tomorrow in UTC), which it answers with grey striped placeholder tiles.
   // maxNativeZoom follows each layer's tile matrix set.
+  const GIBS = 'Imagery provided by services from the Global Imagery Browse Services (GIBS), operated by the NASA/GSFC/Earth Science Data and Information System (<a href="https://earthdata.nasa.gov">ESDIS</a>) with funding provided by NASA/HQ.';
   const GIBS_DAY = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
   add({
     group: 'NASA GIBS', icon: '🔭', url: 'https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/{variant}', minZoom: 1, time: GIBS_DAY,
-    attribution: 'Imagery provided by services from the Global Imagery Browse Services (GIBS), operated by the NASA/GSFC/Earth Science Data and Information System (<a href="https://earthdata.nasa.gov">ESDIS</a>) with funding provided by NASA/HQ.',
+    attribution: GIBS,
   }, [
     ['nasa-truecolor', 'MODIS Terra true colour (yesterday)', 'MODIS_Terra_CorrectedReflectance_TrueColor/default/{time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 9 }],
     ['nasa-bands367', 'MODIS Terra bands 3-6-7', 'MODIS_Terra_CorrectedReflectance_Bands367/default/{time}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg', { dark: true, maxNativeZoom: 9 }],
@@ -470,6 +472,27 @@
     ['nasa-snow', 'Snow cover', 'MODIS_Terra_NDSI_Snow_Cover/default/{time}/GoogleMapsCompatible_Level8/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 8 }],
     ['nasa-aerosol', 'Aerosol optical depth', 'MODIS_Terra_Aerosol/default/{time}/GoogleMapsCompatible_Level6/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 6 }],
     ['nasa-chlorophyll', 'Chlorophyll a', 'MODIS_Terra_L2_Chlorophyll_A/default/{time}/GoogleMapsCompatible_Level7/{z}/{y}/{x}.png', { overlay: true, maxNativeZoom: 7 }],
+    // HLS runs about a week behind, so "default" (its latest day) is real data and yesterday is empty.
+    ['nasa-hls-s30', 'Sentinel-2 latest pass (HLS)', 'HLS_S30_Nadir_BRDF_Adjusted_Reflectance/default/default/GoogleMapsCompatible_Level12/{z}/{y}/{x}.png', {
+      icon: '🛰️', overlay: true, maxNativeZoom: 12,
+      attribution: `${GIBS} HLS contains modified Copernicus Sentinel data.`,
+    }],
+  ]);
+
+  // ---------- Copernicus Sentinel-2 cloudless (EOX) ----------
+  // Yearly cloud-free mosaics. 2016 is CC BY 4.0; later years are CC BY-NC-SA 4.0 (non-commercial).
+  const EOX = 'Sentinel-2 cloudless - <a href="https://s2maps.eu">https://s2maps.eu</a> by <a href="https://eox.at">EOX IT Services GmbH</a>';
+  const EOX_YEARS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017];
+  add({
+    group: 'Sentinel-2 cloudless (EOX)', icon: '🛰️', dark: true, maxNativeZoom: 16,
+    url: 'https://tiles.maps.eox.at/wmts/1.0.0/{variant}/default/g/{z}/{y}/{x}.jpg',
+  }, [
+    ...EOX_YEARS.map((y) => [`eox-s2-${y}`, `Sentinel-2 cloudless ${y}`, `s2cloudless-${y}_3857`, {
+      attribution: `${EOX} (Contains modified Copernicus Sentinel data ${y}, <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>)`,
+    }]),
+    ['eox-s2-2016', 'Sentinel-2 cloudless 2016', 's2cloudless_3857', {
+      attribution: `${EOX} (Contains modified Copernicus Sentinel data 2016 &amp; 2017, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>)`,
+    }],
   ]);
 
   // ---------- Overlays ----------

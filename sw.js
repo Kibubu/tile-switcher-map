@@ -11,7 +11,7 @@
  *
  * Bump VERSION together with the ?v= query strings in index.html on every deploy.
  */
-const VERSION = '4';
+const VERSION = '5';
 const SHELL_CACHE = `tsm-shell-v${VERSION}`;
 const TILE_CACHE = 'tsm-tiles-';
 
