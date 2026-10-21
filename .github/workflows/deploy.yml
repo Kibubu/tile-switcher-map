@@ -32,9 +32,9 @@ jobs:
           mkdir _site
           cp -r index.html app.js providers.js style.css sw.js vendor _site/
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
 
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
